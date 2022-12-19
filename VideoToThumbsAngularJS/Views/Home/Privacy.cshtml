@@ -1,0 +1,56 @@
+﻿<div ng-app="app-test" ng-controller="testController as vm">
+
+    <input type="file" onchange="angular.element(this).scope().fileNameChanged(event)" />
+
+    <br />
+    <video id="myVideo" ng-src="{{vm.videoUrl}}" controls></video>
+    <input type="text" ng-model="vm.testtext">
+    <button ng-click="vm.testcapture()">test</button>
+
+</div>
+
+@section Scripts{
+    <script>
+        var app = angular.module("app-test", ['ngSanitize', 'ngAnimate', 'ngTouch']);
+
+        app.controller("testController", function ($scope, $http, $timeout, $window) {
+
+            var vm = this;
+            vm.selectedFile;
+
+            $scope.SelectFile = function (e) {
+               console.log(e.target.files[0].name);
+            };
+
+            vm.testcapture = function () {
+                console.log(vm.testtext);
+            }
+
+
+            $scope.fileNameChanged = function (e) {
+                // create a video element
+
+                                console.log("File", e);
+                var file = e.target.files[0];
+                var video = document.createElement('video');
+                video.src = URL.createObjectURL(file);
+
+                // generate the poster image
+                var posterUrl = vm.createPoster(video);
+                console.log(posterUrl);
+            }
+
+            vm.createPoster = function (video) {
+                //here you can set anytime you want
+                console.log(video);
+                video.currentTime = 5;
+                var canvas = document.createElement("canvas");
+                canvas.width = 350;
+                canvas.height = 200;
+                canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
+                var x = canvas.toDataURL("image/jpeg");
+                console.log(x);
+            }
+        });
+    </script>
+}

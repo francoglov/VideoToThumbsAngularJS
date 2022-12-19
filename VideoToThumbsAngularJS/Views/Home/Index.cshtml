@@ -1,0 +1,211 @@
+﻿
+
+<div ng-app="app-test" ng-controller="testController as vm">
+  
+    <input type="file" ng-change="vm.onFileSelected($event)" />
+
+    <video ng-src="{{vm.videoUrl}}" controls></video>
+
+
+@*    <video id="myVideo" src="{{vm.videoUrl}}"></video>*@
+
+    <canvas id="myCanvas"></canvas>
+    <form>
+        <label for="time">Time:</label>
+
+        <button ng-click="vm.captureFrame()">Capture Frame</button>
+    </form>
+    <button ng-click="vm.captureFrameAndUpload()">Capture Frame and Upload</button>
+</div>
+
+
+@section Scripts{
+    <script>
+        var app = angular.module("app-test", ['ngSanitize', 'ngAnimate', 'ngTouch']);
+        //var app = angular.module("app-image-viewer", []);
+
+        app.controller("testController", function ($scope, $http, $timeout, $window, $sce) {
+
+            vm = this;
+            vm.time = 5;
+            vm.videoUrl = $sce.trustAsResourceUrl('https://www.w3schools.com/html/mov_bbb.mp4');
+
+            vm.captureFrame = function () {
+                // Get the video element and the canvas element
+                var video = document.getElementById('myVideo');
+                var canvas = document.getElementById('myCanvas');
+
+                // Get the time input element
+                var time = 0.2 * video.duration;
+
+                // Set the current time of the video to the calculated time
+                video.currentTime = time;
+
+
+                // Wait for the video to seek to the specified time
+                video.addEventListener('seeked', function () {
+                    // Get the context of the canvas
+                    var context = canvas.getContext('2d');
+
+                    // Set the canvas size to the size of the video
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+
+                    // Draw the current frame of the video onto the canvas
+                    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                    // Convert the canvas content to an image
+                    var image = new Image();
+                    image.crossOrigin = "Anonymous";
+
+                    image.src = canvas.toDataURL();
+
+
+
+                    // You can now use the image as you like, for example, displaying it in an img element or uploading it to a server.
+                });
+            }
+
+            vm.captureFrameAndUpload = function () {
+                // Get the video element and the canvas element
+                var video = document.getElementById('myVideo');
+                var canvas = document.getElementById('myCanvas');
+
+                // Get the time input element
+                var time = 0.2 * video.duration;
+
+                // Set the current time of the video to the calculated time
+                video.currentTime = time;
+
+
+                // Wait for the video to seek to the specified time
+                video.addEventListener('seeked', function () {
+                    // Get the context of the canvas
+                    var context = canvas.getContext('2d');
+
+                    // Set the canvas size to the size of the video
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+
+                    // Draw the current frame of the video onto the canvas
+                    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                    // Convert the canvas content to an image
+                    var image = new Image();
+                    image.crossOrigin = "Anonymous";
+
+                    //image.src = canvas.toDataURL();
+
+                    //vm.uploadImage(image.src, "test");
+                    //vm.putImage(image, 'image.png');
+
+                    var imageData = canvas.toDataURL("image/png");
+
+                    // Use the $http service to send a PUT request
+                    $http.put("/api/Data/UploadImage", imageData, {
+                        headers: {
+                            "Content-Type": "image/png"
+                        }
+                    }).then(function (response) {
+                        // The request was successful
+                        console.log("Image uploaded successfully");
+                    }, function (response) {
+                        // There was an error
+                        console.log("There was an error uploading the image: " + response.statusText);
+                    });
+
+
+
+                    // You can now use the image as you like, for example, displaying it in an img element or uploading it to a server.
+                });
+            }
+
+
+            vm.uploadImage = function (image, imageName) {
+
+                var apiUrl = "/api/Data/UploadImage";
+
+                var uploadImagePic = { Image: image, Name: imageName };
+                $http({
+                    method: 'put',
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    url: apiUrl
+                    , data: uploadImagePic
+                })
+                    .then(function (response) {
+
+                        console.log(response);
+
+                    }, function (err) {
+                        console.log(err);
+
+                    }).finally(function () {
+
+                    });
+
+            }
+
+            vm.putImage = function (image, imageName) {
+                // Set the content type header of the request
+                const headers = new HttpHeaders().set('Content-Type', 'application/json');
+
+                // Send the PUT request with the image data and the image name
+                this.http.put('/api/UploadImage', { image: image, name: imageName }, { headers: headers }).subscribe(
+                    // Handle the response
+                    (response) => {
+                        console.log(response);
+                    },
+                    (error) => {
+                        console.error(error);
+                    }
+                );
+            }
+
+            vm.onFileSelected = function (event) {
+                var file = event.target.files[0];
+
+                // Create a URL for the selected file
+                var fileUrl = URL.createObjectURL(file);
+
+                // Trust the URL of the video
+                vm.videoUrl = $sce.trustAsResourceUrl(fileUrl);
+            }
+
+            //vm.onFileSelected2 = function (files) {
+            //    var validFiles = files.filter(function (file) {
+            //        console.log("File", file);
+            //        return !file.$error;
+            //    });
+            //    var invalidFiles = files.filter(function (file) {
+            //        return file.$error;
+            //    }).map(function (invalidFile) {
+            //        var errorMessage;
+            //        switch (invalidFile.$error) {
+            //            case "pattern":
+            //                errorMessage =
+            //                    "The file has invalid format. Acceptable image file formats are .mp4, .m4v, .ogg, .ogv, .webm.";
+            //                break;
+            //            case "maxSize":
+            //                errorMessage =
+            //                    "The file is too large. The maximum allowed file size is 500 MB.";
+            //                break;
+            //            default:
+            //                errorMessage =
+            //                    "Something wrong with this file";
+            //        }
+
+            //        return {
+            //            name: invalidFile.name,
+            //            errorMessage: errorMessage
+            //        }
+            //    });
+            //};
+
+
+
+        });</script>
+
+
+}
