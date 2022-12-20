@@ -10,7 +10,7 @@
     <br /><br />
     <input type="text" ng-model="vm.basetext" />
     <br />
-    <canvas ng-model="vm.basetext"></canvas>
+    <canvas bind-src="vm.basetext"></canvas>
 
 </div>
 
@@ -18,11 +18,12 @@
     <script>
         var app = angular.module("app-test", ['ngSanitize', 'ngAnimate', 'ngTouch']);
 
-        app.controller("testController", function ($scope, $http, $timeout, $window) {
+        app.controller("testController", function ($scope, $http, $timeout, $window, $sce) {
 
             var vm = this;
             vm.selectedFile;
             vm.basetext;
+            vm.videoUrl;
 
             $scope.SelectFile = function (e) {
                console.log(e.target.files[0].name);
@@ -36,29 +37,65 @@
             $scope.fileNameChanged = function (e) {
                 // create a video element
 
-                                console.log("File", e);
+                //console.log("File", e);
                 var file = e.target.files[0];
+                var url = URL.createObjectURL(file);
+                vm.videoUrl = url;
+
                 var video = document.createElement('video');
-                video.src = URL.createObjectURL(file);
-                console.log ("vide src",video.src);
+                var reader = new FileReader();
+                reader.onloadend = function () {
+                    video.src = reader.result;
+                }
+                reader.readAsDataURL(file);
 
-                // generate the poster image
-                var posterUrl = vm.createPoster(video);
-                console.log(posterUrl);
+                // Wait for the video to load
+                video.addEventListener('loadedmetadata', function () {
+                    vm.captureFrame(video);
+                });
             }
 
-            vm.createPoster = function (video) {
-                //here you can set anytime you want
-                console.log(video);
-                video.currentTime = 10;
-                var canvas = document.createElement("canvas");
-                canvas.width = 350;
-                canvas.height = 200;
-                canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
-                var x = canvas.toDataURL("image/jpeg");
-                vm.basetext = x;
-                return x;
+            //vm.createPoster = function (video) {
+            //    //here you can set anytime you want
+            //    console.log(video);
+            //    video.currentTime = 10;
+            //    var canvas = document.createElement("canvas");
+            //    canvas.width = 350;
+            //    canvas.height = 200;
+            //    canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
+            //    var x = canvas.toDataURL("image/jpeg");
+            //    vm.basetext = $sce.trustAsResourceUrl(x);
+               
+            //    document.querySelector("canvas").src = x;
+            //    return x;
+            //}
+
+            vm.captureFrame = function (video) {
+                // Set the current time of the video to 5 seconds
+                video.currentTime = 5;
+
+                // Wait for the video to seek to the specified time
+                video.addEventListener('seeked', function () {
+                    // Create a canvas element
+                    var canvas = document.createElement("canvas");
+                    var context = canvas.getContext('2d');
+
+                    // Set the width and height of the canvas to the width and height of the video
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+
+                    // Draw the current frame of the video on the canvas
+                    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                    // Get the data URL of the canvas image
+                    var dataUrl = canvas.toDataURL("image/jpeg");
+
+                    // Set the data URL as the src of the canvas element
+                    vm.basetext = $sce.trustAsResourceUrl(dataUrl);
+                });
             }
+
+
         });
     </script>
 }
