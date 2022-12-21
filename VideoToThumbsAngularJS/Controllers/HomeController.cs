@@ -26,6 +26,10 @@ namespace VideoToThumbsAngularJS.Controllers
         {
             return View();
         }
+        public IActionResult VideoThumbTest()
+        {
+            return View();
+        }
 
 
         public IActionResult VThumb()
